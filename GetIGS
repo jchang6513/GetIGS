@@ -1,0 +1,53 @@
+#!/bin/bash
+# by Yi-Wei Chang <jchang6513@gmail.com>
+#
+#--------------------------------------------------------------------------------
+#
+# NAME
+#       GetIGS - A batch IGS file (ftp://garner.ucsd.edu/rinex/) download shell
+#
+# SYNOPSIS
+#	./GetIGS syr sdoy eyr edoy sites
+#
+# DESCRIPTION
+#     	syr:  	start year
+#     	sdoy: 	start day of year
+#     	eyr:  	end year
+#     	edoy: 	end day of year
+#	sites:	name of the file contain sites name (one line one site)
+#
+# DEPENDENCY
+#	wget, uncompress, crx2rnx
+#
+
+sdoy=$2
+edoy=$4
+
+for ((i=$1; i<=$3; i++));
+	do 
+		if [ $i != $3 ]
+			then
+				edoy=366
+			else
+				edoy=$4
+			fi
+		iyr=$(printf "%04d\n" $i)
+		mkdir -p $iyr
+		
+		for ((j=$sdoy; j<=$edoy; j++));
+			do
+				idoy=$(printf "%03d\n" $j)
+				mkdir -p $iyr/$idoy
+				while read p; 
+					do			
+						echo $idoy
+						wget ftp://garner.ucsd.edu/rinex/${iyr}/${idoy}/${p}${idoy}0.${iyr:2:2}d.Z -O  ${iyr}/${idoy}/${p}${idoy}0.${iyr:2:2}d.Z 
+						uncompress ${iyr}/${idoy}/${p}${idoy}0.${iyr:2:2}d.Z
+						./crx2rnx ${iyr}/${idoy}/${p}${idoy}0.${iyr:2:2}d
+					done < $5
+				find ${iyr}/${idoy} -size  0 -print0 |xargs -0 rm
+				rm -r ${iyr}/${idoy}/*d.Z
+				rm -r ${iyr}/${idoy}/*d
+			done
+		sdoy=1
+	done
